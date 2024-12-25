@@ -72,6 +72,7 @@ function LargeScrHomePage() {
                 />
               </div>
             </div>
+
             <div className="ui-h-full ui-w-full ui-rounded-lg ui-bg-white">
               <Image
                 src={SamplePic}
