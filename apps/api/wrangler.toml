@@ -1,10 +1,10 @@
-name = "proven-provider"
+name = "proven-clothing-worker"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
-
-# Add account_id and route configurations
-account_id = "131aa272033d31af519cb9ce93df9bd4"
-workers_dev = true
+compatibility_date = "2024-11-06"
+compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
-# Add your environment variables here 
+AUTH_SECRET = "1aeYfwtAbDlYYacRuMNafaaF9mjeblj4"
+CLIENT_ID = "674629537720-skvi799phrpbfs37t3p0spsg7ah5vrhr.apps.googleusercontent.com"
+CLIENT_SECRET = "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"
+DATABASE_URL = "postgresql://neondb_owner:4dBnVz1LNMwl@ep-steep-star-a5q6xm3v.us-east-2.aws.neon.tech/neondb?sslmode=require"

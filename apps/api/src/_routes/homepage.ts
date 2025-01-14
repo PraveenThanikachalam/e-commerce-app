@@ -7,6 +7,7 @@ import {
 const HomepageRouter = new Hono();
 
 HomepageRouter.get("get-data", GetHomePageContents);
+
 HomepageRouter.post("add-data", AddHomePageContents);
 
 export default HomepageRouter;

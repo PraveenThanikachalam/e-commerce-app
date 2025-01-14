@@ -1,7 +1,9 @@
 import { Context } from "hono";
 import { z } from "zod";
-import db from "../../_db";
 import { HomePageContentsTable } from "../../_db/schema";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import * as schema from "../../_db/schema";
 
 const AllObject = z.object({
   image_url: z.string().url(),
@@ -18,6 +20,18 @@ const HomepageContentsSchema = z.object({
 });
 
 const GetHomePageContents = async (c: Context) => {
+  if (!c.env.DATABASE_URL) {
+    return c.json(
+      {
+        error: "Configuration error",
+        message: "DATABASE_URL is not set",
+      },
+      500
+    );
+  }
+  const sql = neon(c.env.DATABASE_URL!);
+  const db = drizzle(sql, { schema });
+
   if (c.req.method === "GET") {
     try {
       const Response = await db.query.HomePageContentsTable.findMany();
@@ -36,6 +50,18 @@ const GetHomePageContents = async (c: Context) => {
 };
 
 const AddHomePageContents = async (c: Context) => {
+  if (!c.env.DATABASE_URL) {
+    return c.json(
+      {
+        error: "Configuration error",
+        message: "DATABASE_URL is not set",
+      },
+      500
+    );
+  }
+  const sql = neon(c.env.DATABASE_URL!);
+  const db = drizzle(sql, { schema });
+
   if (c.req.method === "POST") {
     try {
       const body = await c.req.json();
