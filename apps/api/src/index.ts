@@ -4,7 +4,7 @@ import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Google from "@auth/core/providers/google";
 import { cors } from "hono/cors";
-import { getCookie, setCookie } from "hono/cookie";
+import CreateUser from "./_db/functions";
 
 export interface Bindings {
   AUTH_SECRET: string;
@@ -36,12 +36,30 @@ app.use(
   initAuthConfig((c: Context) => ({
     basePath: "/api/auth", // This matches the base path for authentication routes
     secret: c.env.AUTH_SECRET || process.env.AUTH_SECRET,
+    // pages: {
+    //   signIn: "http://localhost:3000/auth/login", // to not showup the default authjs screen
+    // },
     providers: [
       Google({
         clientId: c.env.CLIENT_ID || process.env.CLIENT_ID,
         clientSecret: c.env.CLIENT_SECRET || process.env.CLIENT_SECRET,
       }),
     ],
+    callbacks: {
+      async signIn({ user }) {
+        const findUser = await CreateUser(c, user);
+        if (findUser) {
+          console.log("User Already exits");
+        }
+        console.log("User Logged in Successfully");
+        return true;
+      },
+      // async jwt({ token, account, profile }) {
+      //   // Persist the OAuth access_token and or the user id to the token right after signin
+      //   setCookie(c, "token", token.toString());
+      //   return token;
+      // },
+    },
   }))
 );
 
