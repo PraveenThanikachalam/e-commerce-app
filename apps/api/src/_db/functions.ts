@@ -4,7 +4,6 @@ import { Context } from "hono";
 import * as schema from "../_db/schema";
 import { Users as users } from "../_db/schema";
 import { eq } from "drizzle-orm";
-import { AdapterUser } from "@auth/core/adapters";
 
 const CreateUser = async (c: Context, userInfo: any): Promise<boolean> => {
   const sql = neon(c.env.DATABASE_URL!);
