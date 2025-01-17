@@ -4,8 +4,12 @@ import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Google from "@auth/core/providers/google";
 import { cors } from "hono/cors";
-import CreateUser from "./_db/functions";
-
+import { CreateUser } from "./_db/functions";
+import UserRouter from "./_routes/user";
+import { OAuthUser } from "./_types/OAuthUser";
+import { getCookie, setCookie } from "hono/cookie";
+import CheckAuthentication from "./lib/authenticateToken";
+import Credentials from "@auth/core/providers/credentials";
 export interface Bindings {
   AUTH_SECRET: string;
   CLIENT_ID: string;
@@ -40,30 +44,53 @@ app.use(
     //   signIn: "http://localhost:3000/auth/login", // to not showup the default authjs screen
     // },
     providers: [
+      Credentials({
+        credentials: {
+          username: { label: "Username" },
+          password: { label: "Password", type: "password" },
+        },
+        async authorize({ username, password }) {
+          // Implement your user validation logic here
+          // For example, check against a database or a hardcoded user
+          if (username === "praveen" && password === "praveen") {
+            const User = { name: "praveen" };
+            return User; // Return a user object
+          }
+          return null; // Return null if credentials are invalid
+        },
+      }),
       Google({
         clientId: c.env.CLIENT_ID || process.env.CLIENT_ID,
         clientSecret: c.env.CLIENT_SECRET || process.env.CLIENT_SECRET,
       }),
     ],
     callbacks: {
-      async signIn({ user }) {
-        const findUser = await CreateUser(c, user);
+      async signIn({ user, account, profile }) {
+        const OauthUser: OAuthUser = {
+          name: user.name!,
+          image: user?.image!,
+          email: user.email!,
+          userId: user.id!,
+          mobileNumber: parseInt(profile?.phone_number!, 10),
+          provider: account?.provider!,
+        };
+
+        const findUser = await CreateUser(c, OauthUser);
+
         if (findUser) {
-          console.log("User Already exits");
+          console.log("User Already exists");
         }
+
         console.log("User Logged in Successfully");
         return true;
       },
-      // async jwt({ token, account, profile }) {
-      //   // Persist the OAuth access_token and or the user id to the token right after signin
-      //   setCookie(c, "token", token.toString());
-      //   return token;
-      // },
     },
   }))
 );
 
 app.route("/api/homepage", HomepageRouter);
+
+app.route("/api/user-info", UserRouter);
 
 app.use("/api/auth/*", authHandler());
 
