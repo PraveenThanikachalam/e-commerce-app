@@ -4,12 +4,21 @@ import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Google from "@auth/core/providers/google";
 import { cors } from "hono/cors";
-import { CreateUser } from "./_db/functions";
+import {
+  createUser,
+  credDBValidator,
+  isUserAlreadyExists,
+  updateUser,
+} from "./_db/functions";
 import UserRouter from "./_routes/user";
 import { OAuthUser } from "./_types/OAuthUser";
-import { getCookie, setCookie } from "hono/cookie";
-import CheckAuthentication from "./lib/authenticateToken";
 import Credentials from "@auth/core/providers/credentials";
+import * as schema from "./_db/schema";
+import { string, z } from "zod";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { password } from "bun";
+
 export interface Bindings {
   AUTH_SECRET: string;
   CLIENT_ID: string;
@@ -19,7 +28,7 @@ export interface Bindings {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// CORS middleware
+// CORS Middleware
 app.use(
   "*",
   cors({
@@ -32,31 +41,48 @@ app.use(
   })
 );
 
+// Home Route
 app.get("/", (c) => {
   return c.text("Hello Praveen!");
 });
 
+// Initialize Authentication Configuration
 app.use(
   initAuthConfig((c: Context) => ({
-    basePath: "/api/auth", // This matches the base path for authentication routes
+    basePath: "/api/auth",
     secret: c.env.AUTH_SECRET || process.env.AUTH_SECRET,
-    // pages: {
-    //   signIn: "http://localhost:3000/auth/login", // to not showup the default authjs screen
-    // },
     providers: [
       Credentials({
         credentials: {
-          username: { label: "Username" },
-          password: { label: "Password", type: "password" },
+          email: { label: "Email" },
         },
-        async authorize({ username, password }) {
-          // Implement your user validation logic here
-          // For example, check against a database or a hardcoded user
-          if (username === "praveen" && password === "praveen") {
-            const User = { name: "praveen" };
-            return User; // Return a user object
+        async authorize({ email }) {
+          //Connect to Database
+          const sql = neon(c.env.DATABASE_URL!);
+          const db = drizzle(sql, { schema });
+
+          // Email validation
+          if (!email) {
+            return Error("Email field is empty");
           }
-          return null; // Return null if credentials are invalid
+
+          // Checks the user is already exists not not
+          const User = await isUserAlreadyExists(db, email.toString());
+
+          // If user doesn't exists, it will create the new user with email
+          if (!User?.isExists) {
+            return await createUser(db, {
+              name: "",
+              email: email.toString(),
+              userId: "",
+              image: "",
+              provider: "",
+              mobileNumber: 0,
+            });
+          }
+
+          // If the user is already exsits, it will let the user to login
+          return User;
         },
       }),
       Google({
@@ -66,44 +92,53 @@ app.use(
     ],
     callbacks: {
       async signIn({ user, account, profile }) {
-        const OauthUser: OAuthUser = {
-          name: user.name!,
-          image: user?.image!,
-          email: user.email!,
-          userId: user.id!,
-          mobileNumber: parseInt(profile?.phone_number!, 10),
-          provider: account?.provider!,
-        };
+        //Connect to Database
+        const sql = neon(c.env.DATABASE_URL!);
+        const db = drizzle(sql, { schema });
 
-        const findUser = await CreateUser(c, OauthUser);
+        // Creating based on the uniqueness of the EmailId
+        if (user && "email" in user) {
+          const oauthUser: OAuthUser = {
+            name: user.name || "",
+            image: user.image || "",
+            email: user.email || "",
+            userId: user.id || "",
+            mobileNumber: parseInt(profile?.phone_number || "0", 10),
+            provider: account?.provider || "",
+          };
 
-        if (findUser) {
-          console.log("User Already exists");
+          const userExists = await isUserAlreadyExists(db, oauthUser.email);
+
+          if (!userExists) {
+            await createUser(db, oauthUser);
+          }
+
+          console.log("User logged in successfully");
+          return true;
+        } else {
+          console.error("Invalid user object during sign-in", user);
+          return false;
         }
-
-        console.log("User Logged in Successfully");
-        return true;
       },
     },
   }))
 );
 
+// API Routes
 app.route("/api/homepage", HomepageRouter);
-
 app.route("/api/user-info", UserRouter);
 
+// Authentication Routes
 app.use("/api/auth/*", authHandler());
-
 app.use("/api/*", verifyAuth());
 
-// route is protected or not
+// Protected Route
 app.use("/api/protected", async (c) => {
   const authInfo = c.get("authUser");
-  console.log("Context Keys and Values:", c.req.raw);
-  return c.json(authInfo, 200);
+  return c.json(authInfo);
 });
 
-// incase of not-found 404 pages
+// 404 Not Found
 app.notFound((c) => {
   return c.html(notFound);
 });

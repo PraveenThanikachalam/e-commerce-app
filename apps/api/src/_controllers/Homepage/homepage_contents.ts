@@ -4,20 +4,7 @@ import { HomePageContentsTable } from "../../_db/schema";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "../../_db/schema";
-
-const AllObject = z.object({
-  image_url: z.string().url(),
-  image_alt: z.string(),
-});
-
-const HomepageContentsSchema = z.object({
-  popular_categories: z.array(AllObject),
-  recent_deals: AllObject,
-  popular_products: z.array(AllObject),
-  slides: z.array(AllObject),
-  popular_with_men: z.array(AllObject),
-  popular_with_women: z.array(AllObject),
-});
+import { HomepageContentValidation } from "../../lib/z.validation";
 
 const GetHomePageContents = async (c: Context) => {
   if (!c.env.DATABASE_URL) {
@@ -65,7 +52,7 @@ const AddHomePageContents = async (c: Context) => {
   if (c.req.method === "POST") {
     try {
       const body = await c.req.json();
-      const validatedData = HomepageContentsSchema.parse(body);
+      const validatedData = HomepageContentValidation.parse(body);
 
       await db.insert(HomePageContentsTable).values(validatedData);
 

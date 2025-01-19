@@ -3,6 +3,6 @@ export type OAuthUser = {
   email: string;
   userId: string;
   image: string;
-    provider: string;
-  mobileNumber: Number
+  provider: string;
+  mobileNumber: number;
 };
