@@ -4,20 +4,16 @@ import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Google from "@auth/core/providers/google";
 import { cors } from "hono/cors";
-import {
-  createUser,
-  credDBValidator,
-  isUserAlreadyExists,
-  updateUser,
-} from "./_db/functions";
+import { isUserAlreadyExists, updateUser } from "./_db/functions";
+import createUser from "./_controllers/UserInfo/createUser";
 import UserRouter from "./_routes/user";
 import { OAuthUser } from "./_types/OAuthUser";
 import Credentials from "@auth/core/providers/credentials";
 import * as schema from "./_db/schema";
-import { string, z } from "zod";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { password } from "bun";
+import { CredValidation } from "./lib/z.validation";
+import { SessionStore } from "@auth/core/lib/utils/cookie";
 
 export interface Bindings {
   AUTH_SECRET: string;
@@ -66,19 +62,26 @@ app.use(
             return Error("Email field is empty");
           }
 
+          // Zod validation
+          CredValidation.parse(email);
+
           // Checks the user is already exists not not
           const User = await isUserAlreadyExists(db, email.toString());
 
           // If user doesn't exists, it will create the new user with email
           if (!User?.isExists) {
-            return await createUser(db, {
-              name: "",
-              email: email.toString(),
-              userId: "",
-              image: "",
-              provider: "",
-              mobileNumber: 0,
-            });
+            return await createUser(
+              db,
+              {
+                name: "",
+                email: email.toString(),
+                userId: "",
+                image: "",
+                provider: "",
+                mobileNumber: 0,
+              },
+              schema.Users
+            );
           }
 
           // If the user is already exsits, it will let the user to login
@@ -109,8 +112,8 @@ app.use(
 
           const userExists = await isUserAlreadyExists(db, oauthUser.email);
 
-          if (!userExists) {
-            await createUser(db, oauthUser);
+          if (!userExists?.isExists) {
+            await createUser(db, oauthUser, schema.Users);
           }
 
           console.log("User logged in successfully");
@@ -126,6 +129,9 @@ app.use(
 
 // API Routes
 app.route("/api/homepage", HomepageRouter);
+
+// Protect the `/api/user-info` route
+app.use("/api/user-info", verifyAuth());
 app.route("/api/user-info", UserRouter);
 
 // Authentication Routes
@@ -135,6 +141,7 @@ app.use("/api/*", verifyAuth());
 // Protected Route
 app.use("/api/protected", async (c) => {
   const authInfo = c.get("authUser");
+
   return c.json(authInfo);
 });
 

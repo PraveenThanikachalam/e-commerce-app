@@ -52,6 +52,8 @@ const AddHomePageContents = async (c: Context) => {
   if (c.req.method === "POST") {
     try {
       const body = await c.req.json();
+
+      // Zod validation
       const validatedData = HomepageContentValidation.parse(body);
 
       await db.insert(HomePageContentsTable).values(validatedData);

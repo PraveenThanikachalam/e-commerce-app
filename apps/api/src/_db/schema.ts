@@ -3,7 +3,7 @@ import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
 export const Users = pgTable("user", {
   id: serial("id").primaryKey().unique(),
   userId: text("userId").unique(),
-  name: text("name").notNull(),
+  name: text("name").notNull().unique(),
   avatar: text("avatarUrl"),
   email: text("email").notNull().unique(),
   mobileNumber: integer("mobileNumber"),

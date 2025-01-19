@@ -4,6 +4,10 @@ import { neon } from "@neondatabase/serverless";
 import * as schema from "../../_db/schema";
 import { eq } from "drizzle-orm";
 
+// Todo :-
+// ------ Zod validation need to be added
+// ------ Check for reusable code
+
 const UpdateUser = async (c: Context): Promise<Response> => {
   const sql = neon(c.env.DATABASE_URL!);
   const db = drizzle(sql, { schema });
@@ -17,15 +21,15 @@ const UpdateUser = async (c: Context): Promise<Response> => {
         return c.json({ message: "Body doesn't contains userId" }, 400);
 
       //   Update user logic here
-      await db
+      const response = await db
         .update(schema.Users)
         .set({
           name,
           avatar,
           mobileNumber,
         })
-        .where(eq(schema.Users.userId, userId)); // Checks for the unique userId to update the fields
-
+        .where(eq(schema.Users.email, email)); // Checks for the unique userId to update the fields
+      console.log(response);
       console.log("User updated successfully");
 
       return c.json({ message: "User updated successfully" }, 200);

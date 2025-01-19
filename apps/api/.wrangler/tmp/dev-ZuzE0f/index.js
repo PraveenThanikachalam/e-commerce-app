@@ -10,7 +10,7 @@ var __publicField = (obj, key, value) => {
   return value;
 };
 
-// .wrangler/tmp/bundle-Za1BGz/checked-fetch.js
+// .wrangler/tmp/bundle-aJzS2I/checked-fetch.js
 var urls = /* @__PURE__ */ new Set();
 function checkURL(request, init2) {
   const url = request instanceof URL ? request : new URL(
@@ -12470,7 +12470,7 @@ __publicField(PgTransaction, _a141, "PgTransaction");
 var Users = pgTable("user", {
   id: serial("id").primaryKey().unique(),
   userId: text("userId").unique(),
-  name: text("name").notNull(),
+  name: text("name").notNull().unique(),
   avatar: text("avatarUrl"),
   email: text("email").notNull().unique(),
   mobileNumber: integer("mobileNumber")
@@ -26865,15 +26865,17 @@ var isUserAlreadyExists = /* @__PURE__ */ __name(async (db, email) => {
     console.error("Error checking user existence:", error);
   }
 }, "isUserAlreadyExists");
-var createUser = /* @__PURE__ */ __name(async (db, userInfo) => {
+
+// src/_controllers/UserInfo/createUser.ts
+var createUser = /* @__PURE__ */ __name(async (db, userInfo, userSchema) => {
   try {
-    const [user] = await db.insert(Users).values({
+    const [user] = await db.insert(userSchema).values({
       name: userInfo.name || "",
       userId: userInfo.userId || "",
       avatar: userInfo.image || "",
       email: userInfo.email || "",
       mobileNumber: userInfo.mobileNumber || 0
-    }).returning({ name: Users.name, email: Users.email });
+    }).returning({ name: userSchema.name, email: userSchema.email });
     console.log("Database: User Created Successfully");
     return user;
   } catch (error) {
@@ -26881,6 +26883,7 @@ var createUser = /* @__PURE__ */ __name(async (db, userInfo) => {
     throw new Error("Failed to create user");
   }
 }, "createUser");
+var createUser_default = createUser;
 
 // src/_controllers/UserInfo/updateUser.ts
 var UpdateUser = /* @__PURE__ */ __name(async (c3) => {
@@ -26892,11 +26895,12 @@ var UpdateUser = /* @__PURE__ */ __name(async (c3) => {
       const { userId, name, email, avatar, mobileNumber } = UserData;
       if (!userId)
         return c3.json({ message: "Body doesn't contains userId" }, 400);
-      await db.update(Users).set({
+      const response = await db.update(Users).set({
         name,
         avatar,
         mobileNumber
-      }).where(eq(Users.userId, userId));
+      }).where(eq(Users.email, email));
+      console.log(response);
       console.log("User updated successfully");
       return c3.json({ message: "User updated successfully" }, 200);
     } catch (error) {
@@ -26961,14 +26965,18 @@ app.use(
           CredValidation.parse(email);
           const User = await isUserAlreadyExists(db, email.toString());
           if (!User?.isExists) {
-            return await createUser(db, {
-              name: "",
-              email: email.toString(),
-              userId: "",
-              image: "",
-              provider: "",
-              mobileNumber: 0
-            });
+            return await createUser_default(
+              db,
+              {
+                name: "",
+                email: email.toString(),
+                userId: "",
+                image: "",
+                provider: "",
+                mobileNumber: 0
+              },
+              Users
+            );
           }
           return User;
         }
@@ -26992,8 +27000,8 @@ app.use(
             provider: account?.provider || ""
           };
           const userExists = await isUserAlreadyExists(db, oauthUser.email);
-          if (!userExists) {
-            await createUser(db, oauthUser);
+          if (!userExists?.isExists) {
+            await createUser_default(db, oauthUser, Users);
           }
           console.log("User logged in successfully");
           return true;
@@ -27006,10 +27014,10 @@ app.use(
   }))
 );
 app.route("/api/homepage", homepage_default);
-app.route("/api/user-info", user_default);
-app.use("/api/auth/*", authHandler());
 app.use("/api/user-info", verifyAuth());
 app.route("/api/user-info", user_default);
+app.use("/api/auth/*", authHandler());
+app.use("/api/*", verifyAuth());
 app.use("/api/protected", async (c3) => {
   const authInfo = c3.get("authUser");
   return c3.json(authInfo);
@@ -27063,7 +27071,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-Za1BGz/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-aJzS2I/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -27095,7 +27103,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-Za1BGz/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-aJzS2I/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

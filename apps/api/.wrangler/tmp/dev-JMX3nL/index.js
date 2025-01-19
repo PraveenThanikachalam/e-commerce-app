@@ -2488,11 +2488,11 @@ function isValidIP(ip, version2) {
   return false;
 }
 __name(isValidIP, "isValidIP");
-function isValidJWT(jwt2, alg2) {
-  if (!jwtRegex.test(jwt2))
+function isValidJWT(jwt, alg2) {
+  if (!jwtRegex.test(jwt))
     return false;
   try {
-    const [header] = jwt2.split(".");
+    const [header] = jwt.split(".");
     const base64 = header.replace(/-/g, "+").replace(/_/g, "/").padEnd(header.length + (4 - header.length % 4) % 4, "=");
     const decoded = JSON.parse(atob(base64));
     if (typeof decoded !== "object" || decoded === null)
@@ -21322,8 +21322,8 @@ var jwt_claims_set_default = /* @__PURE__ */ __name((protectedHeader, encodedPay
 }, "default");
 
 // ../../node_modules/.pnpm/jose@5.9.6/node_modules/jose/dist/browser/jwt/decrypt.js
-async function jwtDecrypt(jwt2, key, options) {
-  const decrypted = await compactDecrypt(jwt2, key, options);
+async function jwtDecrypt(jwt, key, options) {
+  const decrypted = await compactDecrypt(jwt, key, options);
   const payload = jwt_claims_set_default(decrypted.protectedHeader, decrypted.plaintext, options);
   const { protectedHeader } = decrypted;
   if (protectedHeader.iss !== void 0 && protectedHeader.iss !== payload.iss) {
@@ -21562,10 +21562,10 @@ var encode2 = encode;
 var decode2 = decode;
 
 // ../../node_modules/.pnpm/jose@5.9.6/node_modules/jose/dist/browser/util/decode_jwt.js
-function decodeJwt(jwt2) {
-  if (typeof jwt2 !== "string")
+function decodeJwt(jwt) {
+  if (typeof jwt !== "string")
     throw new JWTInvalid("JWTs must use Compact JWS serialization, JWT must be a string");
-  const { 1: payload, length } = jwt2.split(".");
+  const { 1: payload, length } = jwt.split(".");
   if (length === 5)
     throw new JWTInvalid("Only JWTs using Compact JWS serialization can be decoded");
   if (length !== 3)
@@ -23650,7 +23650,7 @@ async function handleLoginOrRegister(sessionToken, _profile, _account, options) 
     throw new Error("Missing or invalid provider account");
   if (!["email", "oauth", "oidc", "webauthn"].includes(_account.type))
     throw new Error("Provider not supported");
-  const { adapter, jwt: jwt2, events, session: { strategy: sessionStrategy, generateSessionToken } } = options;
+  const { adapter, jwt, events, session: { strategy: sessionStrategy, generateSessionToken } } = options;
   if (!adapter) {
     return { user: _profile, account: _account };
   }
@@ -23665,7 +23665,7 @@ async function handleLoginOrRegister(sessionToken, _profile, _account, options) 
     if (useJwtSession) {
       try {
         const salt = options.cookies.sessionToken.name;
-        session2 = await jwt2.decode({ ...jwt2, token: sessionToken, salt });
+        session2 = await jwt.decode({ ...jwt, token: sessionToken, salt });
         if (session2 && "sub" in session2 && session2.sub) {
           user = await getUser(session2.sub);
         }
@@ -24476,8 +24476,8 @@ async function processUserInfoResponse(as, client, expectedSubject, response, op
   assertReadableResponse(response);
   let json2;
   if (getContentType(response) === "application/jwt") {
-    const { claims, jwt: jwt2 } = await validateJwt(await response.text(), checkSigningAlgorithm.bind(void 0, client.userinfo_signed_response_alg, as.userinfo_signing_alg_values_supported, void 0), getClockSkew(client), getClockTolerance(client), options?.[jweDecrypt]).then(validateOptionalAudience.bind(void 0, client.client_id)).then(validateOptionalIssuer.bind(void 0, as));
-    jwtRefs.set(response, jwt2);
+    const { claims, jwt } = await validateJwt(await response.text(), checkSigningAlgorithm.bind(void 0, client.userinfo_signed_response_alg, as.userinfo_signing_alg_values_supported, void 0), getClockSkew(client), getClockTolerance(client), options?.[jweDecrypt]).then(validateOptionalAudience.bind(void 0, client.client_id)).then(validateOptionalIssuer.bind(void 0, as));
+    jwtRefs.set(response, jwt);
     json2 = claims;
   } else {
     if (client.userinfo_signed_response_alg) {
@@ -24621,7 +24621,7 @@ async function processGenericAccessTokenResponse(as, client, response, additiona
     if (additionalRequiredIdTokenClaims?.length) {
       requiredClaims.push(...additionalRequiredIdTokenClaims);
     }
-    const { claims, jwt: jwt2 } = await validateJwt(json2.id_token, checkSigningAlgorithm.bind(void 0, client.id_token_signed_response_alg, as.id_token_signing_alg_values_supported, "RS256"), getClockSkew(client), getClockTolerance(client), options?.[jweDecrypt]).then(validatePresence.bind(void 0, requiredClaims)).then(validateIssuer.bind(void 0, as)).then(validateAudience.bind(void 0, client.client_id));
+    const { claims, jwt } = await validateJwt(json2.id_token, checkSigningAlgorithm.bind(void 0, client.id_token_signed_response_alg, as.id_token_signing_alg_values_supported, "RS256"), getClockSkew(client), getClockTolerance(client), options?.[jweDecrypt]).then(validatePresence.bind(void 0, requiredClaims)).then(validateIssuer.bind(void 0, as)).then(validateAudience.bind(void 0, client.client_id));
     if (Array.isArray(claims.aud) && claims.aud.length !== 1) {
       if (claims.azp === void 0) {
         throw OPE('ID Token "aud" (audience) claim includes additional untrusted audiences', JWT_CLAIM_COMPARISON, { claims, claim: "aud" });
@@ -24633,7 +24633,7 @@ async function processGenericAccessTokenResponse(as, client, response, additiona
     if (claims.auth_time !== void 0) {
       assertNumber(claims.auth_time, false, 'ID Token "auth_time" (authentication time)', INVALID_RESPONSE, { claims });
     }
-    jwtRefs.set(response, jwt2);
+    jwtRefs.set(response, jwt);
     idTokenClaims.set(json2, claims);
   }
   return json2;
@@ -25122,12 +25122,12 @@ async function sealCookie(name, payload, options) {
 __name(sealCookie, "sealCookie");
 async function parseCookie3(name, value, options) {
   try {
-    const { logger, cookies, jwt: jwt2 } = options;
+    const { logger, cookies, jwt } = options;
     logger.debug(`PARSE_${name.toUpperCase()}`, { cookie: value });
     if (!value)
       throw new InvalidCheck(`${name} cookie was missing`);
     const parsed = await decode4({
-      ...jwt2,
+      ...jwt,
       token: value,
       salt: cookies[name].name
     });
@@ -25714,7 +25714,7 @@ async function callback(request, options, sessionStore, cookies) {
   if (!options.provider)
     throw new InvalidProvider("Callback route called without provider");
   const { query, body, method, headers } = request;
-  const { provider, adapter, url, callbackUrl, pages, jwt: jwt2, events, callbacks, session: { strategy: sessionStrategy, maxAge: sessionMaxAge }, logger } = options;
+  const { provider, adapter, url, callbackUrl, pages, jwt, events, callbacks, session: { strategy: sessionStrategy, maxAge: sessionMaxAge }, logger } = options;
   const useJwtSession = sessionStrategy === "jwt";
   try {
     if (provider.type === "oauth" || provider.type === "oidc") {
@@ -25772,7 +25772,7 @@ async function callback(request, options, sessionStore, cookies) {
           cookies.push(...sessionStore.clean());
         } else {
           const salt = options.cookies.sessionToken.name;
-          const newToken = await jwt2.encode({ ...jwt2, token, salt });
+          const newToken = await jwt.encode({ ...jwt, token, salt });
           const cookieExpires = /* @__PURE__ */ new Date();
           cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1e3);
           const sessionCookies = sessionStore.chunk(newToken, {
@@ -25859,7 +25859,7 @@ async function callback(request, options, sessionStore, cookies) {
           cookies.push(...sessionStore.clean());
         } else {
           const salt = options.cookies.sessionToken.name;
-          const newToken = await jwt2.encode({ ...jwt2, token, salt });
+          const newToken = await jwt.encode({ ...jwt, token, salt });
           const cookieExpires = /* @__PURE__ */ new Date();
           cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1e3);
           const sessionCookies = sessionStore.chunk(newToken, {
@@ -25923,7 +25923,7 @@ async function callback(request, options, sessionStore, cookies) {
         cookies.push(...sessionStore.clean());
       } else {
         const salt = options.cookies.sessionToken.name;
-        const newToken = await jwt2.encode({ ...jwt2, token, salt });
+        const newToken = await jwt.encode({ ...jwt, token, salt });
         const cookieExpires = /* @__PURE__ */ new Date();
         cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1e3);
         const sessionCookies = sessionStore.chunk(newToken, {
@@ -25986,7 +25986,7 @@ async function callback(request, options, sessionStore, cookies) {
           cookies.push(...sessionStore.clean());
         } else {
           const salt = options.cookies.sessionToken.name;
-          const newToken = await jwt2.encode({ ...jwt2, token, salt });
+          const newToken = await jwt.encode({ ...jwt, token, salt });
           const cookieExpires = /* @__PURE__ */ new Date();
           cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1e3);
           const sessionCookies = sessionStore.chunk(newToken, {
@@ -26047,7 +26047,7 @@ __name(handleAuthorized, "handleAuthorized");
 
 // ../../node_modules/.pnpm/@auth+core@0.37.4/node_modules/@auth/core/lib/actions/session.js
 async function session(options, sessionStore, cookies, isUpdate, newSession) {
-  const { adapter, jwt: jwt2, events, callbacks, logger, session: { strategy: sessionStrategy, maxAge: sessionMaxAge } } = options;
+  const { adapter, jwt, events, callbacks, logger, session: { strategy: sessionStrategy, maxAge: sessionMaxAge } } = options;
   const response = {
     body: null,
     headers: { "Content-Type": "application/json" },
@@ -26059,7 +26059,7 @@ async function session(options, sessionStore, cookies, isUpdate, newSession) {
   if (sessionStrategy === "jwt") {
     try {
       const salt = options.cookies.sessionToken.name;
-      const payload = await jwt2.decode({ ...jwt2, token: sessionToken, salt });
+      const payload = await jwt.decode({ ...jwt, token: sessionToken, salt });
       if (!payload)
         throw new Error("Invalid JWT");
       const token = await callbacks.jwt({
@@ -26075,7 +26075,7 @@ async function session(options, sessionStore, cookies, isUpdate, newSession) {
         };
         const newSession2 = await callbacks.session({ session: session2, token });
         response.body = newSession2;
-        const newToken = await jwt2.encode({ ...jwt2, token, salt });
+        const newToken = await jwt.encode({ ...jwt, token, salt });
         const sessionCookies = sessionStore.chunk(newToken, {
           expires: newExpires
         });
@@ -26313,14 +26313,14 @@ __name(signIn, "signIn");
 
 // ../../node_modules/.pnpm/@auth+core@0.37.4/node_modules/@auth/core/lib/actions/signout.js
 async function signOut(cookies, sessionStore, options) {
-  const { jwt: jwt2, events, callbackUrl: redirect, logger, session: session2 } = options;
+  const { jwt, events, callbackUrl: redirect, logger, session: session2 } = options;
   const sessionToken = sessionStore.value;
   if (!sessionToken)
     return { redirect, cookies };
   try {
     if (session2.strategy === "jwt") {
       const salt = options.cookies.sessionToken.name;
-      const token = await jwt2.decode({ ...jwt2, token: sessionToken, salt });
+      const token = await jwt.decode({ ...jwt, token: sessionToken, salt });
       await events.signOut?.({ token });
     } else {
       const session3 = await options.adapter?.deleteSession(sessionToken);
@@ -26336,13 +26336,13 @@ __name(signOut, "signOut");
 
 // ../../node_modules/.pnpm/@auth+core@0.37.4/node_modules/@auth/core/lib/utils/session.js
 async function getLoggedInUser(options, sessionStore) {
-  const { adapter, jwt: jwt2, session: { strategy: sessionStrategy } } = options;
+  const { adapter, jwt, session: { strategy: sessionStrategy } } = options;
   const sessionToken = sessionStore.value;
   if (!sessionToken)
     return null;
   if (sessionStrategy === "jwt") {
     const salt = options.cookies.sessionToken.name;
-    const payload = await jwt2.decode({ ...jwt2, token: sessionToken, salt });
+    const payload = await jwt.decode({ ...jwt, token: sessionToken, salt });
     if (payload && payload.sub) {
       return {
         id: payload.sub,
@@ -26908,382 +26908,9 @@ var UpdateUser = /* @__PURE__ */ __name(async (c3) => {
 }, "UpdateUser");
 var updateUser_default = UpdateUser;
 
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/encode.js
-var decodeBase64Url2 = /* @__PURE__ */ __name((str) => {
-  return decodeBase642(str.replace(/_|-/g, (m2) => ({ _: "/", "-": "+" })[m2] ?? m2));
-}, "decodeBase64Url");
-var encodeBase64Url2 = /* @__PURE__ */ __name((buf2) => encodeBase642(buf2).replace(/\/|\+/g, (m2) => ({ "/": "_", "+": "-" })[m2] ?? m2), "encodeBase64Url");
-var encodeBase642 = /* @__PURE__ */ __name((buf2) => {
-  let binary = "";
-  const bytes = new Uint8Array(buf2);
-  for (let i4 = 0, len = bytes.length; i4 < len; i4++) {
-    binary += String.fromCharCode(bytes[i4]);
-  }
-  return btoa(binary);
-}, "encodeBase64");
-var decodeBase642 = /* @__PURE__ */ __name((str) => {
-  const binary = atob(str);
-  const bytes = new Uint8Array(new ArrayBuffer(binary.length));
-  const half = binary.length / 2;
-  for (let i4 = 0, j3 = binary.length - 1; i4 <= half; i4++, j3--) {
-    bytes[i4] = binary.charCodeAt(i4);
-    bytes[j3] = binary.charCodeAt(j3);
-  }
-  return bytes;
-}, "decodeBase64");
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/jwa.js
-var AlgorithmTypes = /* @__PURE__ */ ((AlgorithmTypes2) => {
-  AlgorithmTypes2["HS256"] = "HS256";
-  AlgorithmTypes2["HS384"] = "HS384";
-  AlgorithmTypes2["HS512"] = "HS512";
-  AlgorithmTypes2["RS256"] = "RS256";
-  AlgorithmTypes2["RS384"] = "RS384";
-  AlgorithmTypes2["RS512"] = "RS512";
-  AlgorithmTypes2["PS256"] = "PS256";
-  AlgorithmTypes2["PS384"] = "PS384";
-  AlgorithmTypes2["PS512"] = "PS512";
-  AlgorithmTypes2["ES256"] = "ES256";
-  AlgorithmTypes2["ES384"] = "ES384";
-  AlgorithmTypes2["ES512"] = "ES512";
-  AlgorithmTypes2["EdDSA"] = "EdDSA";
-  return AlgorithmTypes2;
-})(AlgorithmTypes || {});
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/types.js
-var JwtAlgorithmNotImplemented = /* @__PURE__ */ __name(class extends Error {
-  constructor(alg2) {
-    super(`${alg2} is not an implemented algorithm`);
-    this.name = "JwtAlgorithmNotImplemented";
-  }
-}, "JwtAlgorithmNotImplemented");
-var JwtTokenInvalid = /* @__PURE__ */ __name(class extends Error {
-  constructor(token) {
-    super(`invalid JWT token: ${token}`);
-    this.name = "JwtTokenInvalid";
-  }
-}, "JwtTokenInvalid");
-var JwtTokenNotBefore = /* @__PURE__ */ __name(class extends Error {
-  constructor(token) {
-    super(`token (${token}) is being used before it's valid`);
-    this.name = "JwtTokenNotBefore";
-  }
-}, "JwtTokenNotBefore");
-var JwtTokenExpired = /* @__PURE__ */ __name(class extends Error {
-  constructor(token) {
-    super(`token (${token}) expired`);
-    this.name = "JwtTokenExpired";
-  }
-}, "JwtTokenExpired");
-var JwtTokenIssuedAt = /* @__PURE__ */ __name(class extends Error {
-  constructor(currentTimestamp, iat) {
-    super(`Incorrect "iat" claim must be a older than "${currentTimestamp}" (iat: "${iat}")`);
-    this.name = "JwtTokenIssuedAt";
-  }
-}, "JwtTokenIssuedAt");
-var JwtHeaderInvalid = /* @__PURE__ */ __name(class extends Error {
-  constructor(header) {
-    super(`jwt header is invalid: ${JSON.stringify(header)}`);
-    this.name = "JwtHeaderInvalid";
-  }
-}, "JwtHeaderInvalid");
-var JwtTokenSignatureMismatched = /* @__PURE__ */ __name(class extends Error {
-  constructor(token) {
-    super(`token(${token}) signature mismatched`);
-    this.name = "JwtTokenSignatureMismatched";
-  }
-}, "JwtTokenSignatureMismatched");
-var CryptoKeyUsage = /* @__PURE__ */ ((CryptoKeyUsage2) => {
-  CryptoKeyUsage2["Encrypt"] = "encrypt";
-  CryptoKeyUsage2["Decrypt"] = "decrypt";
-  CryptoKeyUsage2["Sign"] = "sign";
-  CryptoKeyUsage2["Verify"] = "verify";
-  CryptoKeyUsage2["DeriveKey"] = "deriveKey";
-  CryptoKeyUsage2["DeriveBits"] = "deriveBits";
-  CryptoKeyUsage2["WrapKey"] = "wrapKey";
-  CryptoKeyUsage2["UnwrapKey"] = "unwrapKey";
-  return CryptoKeyUsage2;
-})(CryptoKeyUsage || {});
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/utf8.js
-var utf8Encoder = new TextEncoder();
-var utf8Decoder = new TextDecoder();
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/jws.js
-async function signing(privateKey, alg2, data) {
-  const algorithm = getKeyAlgorithm(alg2);
-  const cryptoKey = await importPrivateKey(privateKey, algorithm);
-  return await crypto.subtle.sign(algorithm, cryptoKey, data);
-}
-__name(signing, "signing");
-async function verifying(publicKey, alg2, signature, data) {
-  const algorithm = getKeyAlgorithm(alg2);
-  const cryptoKey = await importPublicKey(publicKey, algorithm);
-  return await crypto.subtle.verify(algorithm, cryptoKey, signature, data);
-}
-__name(verifying, "verifying");
-function pemToBinary(pem) {
-  return decodeBase642(pem.replace(/-+(BEGIN|END).*/g, "").replace(/\s/g, ""));
-}
-__name(pemToBinary, "pemToBinary");
-async function importPrivateKey(key, alg2) {
-  if (!crypto.subtle || !crypto.subtle.importKey) {
-    throw new Error("`crypto.subtle.importKey` is undefined. JWT auth middleware requires it.");
-  }
-  if (isCryptoKey2(key)) {
-    if (key.type !== "private" && key.type !== "secret") {
-      throw new Error(
-        `unexpected key type: CryptoKey.type is ${key.type}, expected private or secret`
-      );
-    }
-    return key;
-  }
-  const usages = [CryptoKeyUsage.Sign];
-  if (typeof key === "object") {
-    return await crypto.subtle.importKey("jwk", key, alg2, false, usages);
-  }
-  if (key.includes("PRIVATE")) {
-    return await crypto.subtle.importKey("pkcs8", pemToBinary(key), alg2, false, usages);
-  }
-  return await crypto.subtle.importKey("raw", utf8Encoder.encode(key), alg2, false, usages);
-}
-__name(importPrivateKey, "importPrivateKey");
-async function importPublicKey(key, alg2) {
-  if (!crypto.subtle || !crypto.subtle.importKey) {
-    throw new Error("`crypto.subtle.importKey` is undefined. JWT auth middleware requires it.");
-  }
-  if (isCryptoKey2(key)) {
-    if (key.type === "public" || key.type === "secret") {
-      return key;
-    }
-    key = await exportPublicJwkFrom(key);
-  }
-  if (typeof key === "string" && key.includes("PRIVATE")) {
-    const privateKey = await crypto.subtle.importKey("pkcs8", pemToBinary(key), alg2, true, [
-      CryptoKeyUsage.Sign
-    ]);
-    key = await exportPublicJwkFrom(privateKey);
-  }
-  const usages = [CryptoKeyUsage.Verify];
-  if (typeof key === "object") {
-    return await crypto.subtle.importKey("jwk", key, alg2, false, usages);
-  }
-  if (key.includes("PUBLIC")) {
-    return await crypto.subtle.importKey("spki", pemToBinary(key), alg2, false, usages);
-  }
-  return await crypto.subtle.importKey("raw", utf8Encoder.encode(key), alg2, false, usages);
-}
-__name(importPublicKey, "importPublicKey");
-async function exportPublicJwkFrom(privateKey) {
-  if (privateKey.type !== "private") {
-    throw new Error(`unexpected key type: ${privateKey.type}`);
-  }
-  if (!privateKey.extractable) {
-    throw new Error("unexpected private key is unextractable");
-  }
-  const jwk = await crypto.subtle.exportKey("jwk", privateKey);
-  const { kty } = jwk;
-  const { alg: alg2, e: e2, n: n2 } = jwk;
-  const { crv, x: x4, y: y3 } = jwk;
-  return { kty, alg: alg2, e: e2, n: n2, crv, x: x4, y: y3, key_ops: [CryptoKeyUsage.Verify] };
-}
-__name(exportPublicJwkFrom, "exportPublicJwkFrom");
-function getKeyAlgorithm(name) {
-  switch (name) {
-    case "HS256":
-      return {
-        name: "HMAC",
-        hash: {
-          name: "SHA-256"
-        }
-      };
-    case "HS384":
-      return {
-        name: "HMAC",
-        hash: {
-          name: "SHA-384"
-        }
-      };
-    case "HS512":
-      return {
-        name: "HMAC",
-        hash: {
-          name: "SHA-512"
-        }
-      };
-    case "RS256":
-      return {
-        name: "RSASSA-PKCS1-v1_5",
-        hash: {
-          name: "SHA-256"
-        }
-      };
-    case "RS384":
-      return {
-        name: "RSASSA-PKCS1-v1_5",
-        hash: {
-          name: "SHA-384"
-        }
-      };
-    case "RS512":
-      return {
-        name: "RSASSA-PKCS1-v1_5",
-        hash: {
-          name: "SHA-512"
-        }
-      };
-    case "PS256":
-      return {
-        name: "RSA-PSS",
-        hash: {
-          name: "SHA-256"
-        },
-        saltLength: 32
-      };
-    case "PS384":
-      return {
-        name: "RSA-PSS",
-        hash: {
-          name: "SHA-384"
-        },
-        saltLength: 48
-      };
-    case "PS512":
-      return {
-        name: "RSA-PSS",
-        hash: {
-          name: "SHA-512"
-        },
-        saltLength: 64
-      };
-    case "ES256":
-      return {
-        name: "ECDSA",
-        hash: {
-          name: "SHA-256"
-        },
-        namedCurve: "P-256"
-      };
-    case "ES384":
-      return {
-        name: "ECDSA",
-        hash: {
-          name: "SHA-384"
-        },
-        namedCurve: "P-384"
-      };
-    case "ES512":
-      return {
-        name: "ECDSA",
-        hash: {
-          name: "SHA-512"
-        },
-        namedCurve: "P-521"
-      };
-    case "EdDSA":
-      return {
-        name: "Ed25519",
-        namedCurve: "Ed25519"
-      };
-    default:
-      throw new JwtAlgorithmNotImplemented(name);
-  }
-}
-__name(getKeyAlgorithm, "getKeyAlgorithm");
-function isCryptoKey2(key) {
-  const runtime = getRuntimeKey();
-  if (runtime === "node" && !!crypto.webcrypto) {
-    return key instanceof crypto.webcrypto.CryptoKey;
-  }
-  return key instanceof CryptoKey;
-}
-__name(isCryptoKey2, "isCryptoKey");
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/jwt.js
-var encodeJwtPart = /* @__PURE__ */ __name((part) => encodeBase64Url2(utf8Encoder.encode(JSON.stringify(part))).replace(/=/g, ""), "encodeJwtPart");
-var encodeSignaturePart = /* @__PURE__ */ __name((buf2) => encodeBase64Url2(buf2).replace(/=/g, ""), "encodeSignaturePart");
-var decodeJwtPart = /* @__PURE__ */ __name((part) => JSON.parse(utf8Decoder.decode(decodeBase64Url2(part))), "decodeJwtPart");
-function isTokenHeader(obj) {
-  if (typeof obj === "object" && obj !== null) {
-    const objWithAlg = obj;
-    return "alg" in objWithAlg && Object.values(AlgorithmTypes).includes(objWithAlg.alg) && (!("typ" in objWithAlg) || objWithAlg.typ === "JWT");
-  }
-  return false;
-}
-__name(isTokenHeader, "isTokenHeader");
-var sign = /* @__PURE__ */ __name(async (payload, privateKey, alg2 = "HS256") => {
-  const encodedPayload = encodeJwtPart(payload);
-  const encodedHeader = encodeJwtPart({ alg: alg2, typ: "JWT" });
-  const partialToken = `${encodedHeader}.${encodedPayload}`;
-  const signaturePart = await signing(privateKey, alg2, utf8Encoder.encode(partialToken));
-  const signature = encodeSignaturePart(signaturePart);
-  return `${partialToken}.${signature}`;
-}, "sign");
-var verify = /* @__PURE__ */ __name(async (token, publicKey, alg2 = "HS256") => {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    throw new JwtTokenInvalid(token);
-  }
-  const { header, payload } = decode5(token);
-  if (!isTokenHeader(header)) {
-    throw new JwtHeaderInvalid(header);
-  }
-  const now2 = Date.now() / 1e3 | 0;
-  if (payload.nbf && payload.nbf > now2) {
-    throw new JwtTokenNotBefore(token);
-  }
-  if (payload.exp && payload.exp <= now2) {
-    throw new JwtTokenExpired(token);
-  }
-  if (payload.iat && now2 < payload.iat) {
-    throw new JwtTokenIssuedAt(now2, payload.iat);
-  }
-  const headerPayload = token.substring(0, token.lastIndexOf("."));
-  const verified = await verifying(
-    publicKey,
-    alg2,
-    decodeBase64Url2(tokenParts[2]),
-    utf8Encoder.encode(headerPayload)
-  );
-  if (!verified) {
-    throw new JwtTokenSignatureMismatched(token);
-  }
-  return payload;
-}, "verify");
-var decode5 = /* @__PURE__ */ __name((token) => {
-  try {
-    const [h3, p4] = token.split(".");
-    const header = decodeJwtPart(h3);
-    const payload = decodeJwtPart(p4);
-    return {
-      header,
-      payload
-    };
-  } catch {
-    throw new JwtTokenInvalid(token);
-  }
-}, "decode");
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/utils/jwt/index.js
-var Jwt = { sign, verify, decode: decode5 };
-
-// ../../node_modules/.pnpm/hono@4.6.14/node_modules/hono/dist/middleware/jwt/jwt.js
-var verify2 = Jwt.verify;
-var decode6 = Jwt.decode;
-var sign2 = Jwt.sign;
-
-// src/lib/authenticateToken.ts
-var CheckAuthentication = /* @__PURE__ */ __name(async (c3) => {
-  const access_token = c3.req.header("access_token");
-  if (!access_token)
-    return c3.json({ error: "Access Token Required" });
-  const decodedPaylaod = await verify2(access_token, "asdfasdgasfdasdfa");
-}, "CheckAuthentication");
-var authenticateToken_default = CheckAuthentication;
-
 // src/_routes/user.ts
 var UserRouter = new Hono2();
-UserRouter.patch("update-user", authenticateToken_default, updateUser_default);
+UserRouter.patch("update-user", updateUser_default);
 var user_default = UserRouter;
 
 // ../../node_modules/.pnpm/@auth+core@0.37.4/node_modules/@auth/core/providers/credentials.js
@@ -27331,6 +26958,7 @@ app.use(
           if (!email) {
             return Error("Email field is empty");
           }
+          CredValidation.parse(email);
           const User = await isUserAlreadyExists(db, email.toString());
           if (!User?.isExists) {
             return await createUser(db, {
@@ -27380,7 +27008,8 @@ app.use(
 app.route("/api/homepage", homepage_default);
 app.route("/api/user-info", user_default);
 app.use("/api/auth/*", authHandler());
-app.use("/api/*", verifyAuth());
+app.use("/api/user-info", verifyAuth());
+app.route("/api/user-info", user_default);
 app.use("/api/protected", async (c3) => {
   const authInfo = c3.get("authUser");
   return c3.json(authInfo);
