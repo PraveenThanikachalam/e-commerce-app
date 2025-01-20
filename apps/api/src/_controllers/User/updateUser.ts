@@ -6,10 +6,6 @@ import { eq } from "drizzle-orm";
 import { isUserAlreadyExists } from "../../_db/functions";
 import { UpdateUserVlidation } from "../../lib/z.validation";
 
-// Todo :-
-// ------ Zod validation need to be added
-// ------ Check for reusable code
-
 const UpdateUser = async (c: Context): Promise<Response> => {
   const sql = neon(c.env.DATABASE_URL!);
   const db = drizzle(sql, { schema });
@@ -34,7 +30,6 @@ const UpdateUser = async (c: Context): Promise<Response> => {
             mobileNumber: validatedData.mobileNumber,
           })
           .where(eq(schema.Users.id, User.userId)); // Checks for the unique userId to update the fields
-        console.log(response);
         console.log("User updated successfully");
       } else {
         console.log("User not exists");

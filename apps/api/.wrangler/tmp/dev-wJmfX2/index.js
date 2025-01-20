@@ -32799,7 +32799,6 @@ var UpdateUser = /* @__PURE__ */ __name(async (c3) => {
           avatar: validatedData.avatar,
           mobileNumber: validatedData.mobileNumber
         }).where(eq(Users.id, User.userId));
-        console.log(response);
         console.log("User updated successfully");
       } else {
         console.log("User not exists");
