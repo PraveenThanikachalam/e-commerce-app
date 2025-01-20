@@ -1,4 +1,11 @@
-import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  serial,
+  text,
+  jsonb,
+  bigint,
+} from "drizzle-orm/pg-core";
 
 export const Users = pgTable("user", {
   id: serial("id").primaryKey().unique(),
@@ -6,7 +13,7 @@ export const Users = pgTable("user", {
   name: text("name").notNull().unique(),
   avatar: text("avatarUrl"),
   email: text("email").notNull().unique(),
-  mobileNumber: integer("mobileNumber"),
+  mobileNumber: bigint({ mode: "number" }),
 });
 
 export const Products = pgTable("product", {

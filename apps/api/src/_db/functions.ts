@@ -27,6 +27,7 @@ const isUserAlreadyExists = async (
     const user = {
       isExists: userData.length > 0,
       name: userData[0]?.name,
+      userId: userData[0]?.id,
       email: userData[0]?.email,
     };
 

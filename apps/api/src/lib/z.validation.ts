@@ -1,8 +1,9 @@
 import { z } from "Zod";
 
 const CredValidation = z.object({
-  email: z.string().email(),
+  email: z.string(),
 });
+
 const AllObject = z.object({
   image_url: z.string().url(),
   image_alt: z.string(),
@@ -17,4 +18,11 @@ const HomepageContentValidation = z.object({
   popular_with_women: z.array(AllObject),
 });
 
-export { CredValidation, HomepageContentValidation };
+const UpdateUserVlidation = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
+  avatar: z.string().optional(),
+  mobileNumber: z.number().optional(),
+});
+
+export { CredValidation, HomepageContentValidation, UpdateUserVlidation };

@@ -4,8 +4,8 @@ import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Google from "@auth/core/providers/google";
 import { cors } from "hono/cors";
-import { isUserAlreadyExists, updateUser } from "./_db/functions";
-import createUser from "./_controllers/UserInfo/createUser";
+import { isUserAlreadyExists } from "./_db/functions";
+import createUser from "./_controllers/User/createUser";
 import UserRouter from "./_routes/user";
 import { OAuthUser } from "./_types/OAuthUser";
 import Credentials from "@auth/core/providers/credentials";
@@ -13,8 +13,7 @@ import * as schema from "./_db/schema";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { CredValidation } from "./lib/z.validation";
-import { SessionStore } from "@auth/core/lib/utils/cookie";
-
+import { v4 } from "uuid";
 export interface Bindings {
   AUTH_SECRET: string;
   CLIENT_ID: string;
@@ -62,11 +61,13 @@ app.use(
             return Error("Email field is empty");
           }
 
+          console.log(typeof email);
+
           // Zod validation
-          CredValidation.parse(email);
+          const validatedData = CredValidation.parse({ email });
 
           // Checks the user is already exists not not
-          const User = await isUserAlreadyExists(db, email.toString());
+          const User = await isUserAlreadyExists(db, validatedData.email);
 
           // If user doesn't exists, it will create the new user with email
           if (!User?.isExists) {
@@ -74,8 +75,8 @@ app.use(
               db,
               {
                 name: "",
-                email: email.toString(),
-                userId: "",
+                email: validatedData.email,
+                userId: v4(),
                 image: "",
                 provider: "",
                 mobileNumber: 0,

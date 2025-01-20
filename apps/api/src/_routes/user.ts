@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import UpdateUser from "../_controllers/UserInfo/updateUser";
+import UpdateUser from "../_controllers/User/updateUser";
 
 const UserRouter = new Hono();
 
