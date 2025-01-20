@@ -142,7 +142,7 @@ app.use("/api/*", verifyAuth());
 // Protected Route
 app.use("/api/protected", async (c) => {
   const authInfo = c.get("authUser");
-
+  console.log(authInfo);
   return c.json(authInfo);
 });
 

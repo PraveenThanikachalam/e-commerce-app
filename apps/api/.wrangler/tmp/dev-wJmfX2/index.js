@@ -32977,6 +32977,7 @@ app.use("/api/auth/*", authHandler());
 app.use("/api/*", verifyAuth());
 app.use("/api/protected", async (c3) => {
   const authInfo = c3.get("authUser");
+  console.log(authInfo);
   return c3.json(authInfo);
 });
 app.notFound((c3) => {
