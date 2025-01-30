@@ -50,8 +50,9 @@ app.use(
       Credentials({
         credentials: {
           email: { label: "Email" },
+          userName: { label: "Name" },
         },
-        async authorize({ email }) {
+        async authorize({ email, userName }) {
           //Connect to Database
           const sql = neon(c.env.DATABASE_URL!);
           const db = drizzle(sql, { schema });
@@ -61,10 +62,8 @@ app.use(
             return Error("Email field is empty");
           }
 
-          console.log(typeof email);
-
           // Zod validation
-          const validatedData = CredValidation.parse({ email });
+          const validatedData = CredValidation.parse({ email, userName });
 
           // Checks the user is already exists not not
           const User = await isUserAlreadyExists(db, validatedData.email);
@@ -74,19 +73,20 @@ app.use(
             return await createUser(
               db,
               {
-                name: "",
+                name: validatedData.userName,
                 email: validatedData.email,
                 userId: v4(),
                 image: "",
-                provider: "",
+                role: "USER",
+                provider: "Credentails",
                 mobileNumber: 0,
               },
               schema.Users
             );
           }
 
-          // If the user is already exsits, it will let the user to login
-          return User;
+          console.log("User already exists");
+          throw new Error("User already exists");
         },
       }),
       Google({
@@ -105,6 +105,7 @@ app.use(
           const oauthUser: OAuthUser = {
             name: user.name || "",
             image: user.image || "",
+            role: "USER",
             email: user.email || "",
             userId: user.id || "",
             mobileNumber: parseInt(profile?.phone_number || "0", 10),
@@ -117,8 +118,14 @@ app.use(
             await createUser(db, oauthUser, schema.Users);
           }
 
-          console.log("User logged in successfully");
-          return true;
+          if (userExists?.role === "USER") {
+            console.log("User already exists", userExists);
+            console.log("User logged in successfully");
+            return true;
+          }
+
+          console.log("User not allowed to login");
+          return false;
         } else {
           console.error("Invalid user object during sign-in", user);
           return false;
@@ -131,13 +138,20 @@ app.use(
 // API Routes
 app.route("/api/homepage", HomepageRouter);
 
+// Authentication Routes
+app.use("/api/auth/*", authHandler());
+
 // Protect the `/api/user-info` route
 app.use("/api/user-info", verifyAuth());
 app.route("/api/user-info", UserRouter);
 
-// Authentication Routes
-app.use("/api/auth/*", authHandler());
-app.use("/api/*", verifyAuth());
+// Protect all other /api routes except /api/homepage and /api/auth
+app.use("/api/*", async (c, next) => {
+  if (c.req.path.startsWith("/api/homepage")) {
+    return next();
+  }
+  return verifyAuth()(c, next);
+});
 
 // Protected Route
 app.use("/api/protected", async (c) => {

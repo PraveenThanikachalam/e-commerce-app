@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import CheckAdmin from "../_middlewares/checkAdmin";
 import {
   GetHomePageContents,
   AddHomePageContents,
@@ -6,8 +7,10 @@ import {
 
 const HomepageRouter = new Hono();
 
+// Get Homepage Contents
 HomepageRouter.get("get-data", GetHomePageContents);
 
-HomepageRouter.post("add-data", AddHomePageContents);
+// Add Homepage Contents
+HomepageRouter.post("add-data", CheckAdmin, AddHomePageContents);
 
 export default HomepageRouter;

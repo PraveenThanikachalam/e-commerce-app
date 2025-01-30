@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
+    "types": ["node"],
     "jsxImportSource": "hono/jsx"
   }
 }
