@@ -20,6 +20,7 @@ export const Users = pgTable("user", {
 export const Products = pgTable("product", {
   id: serial("productId").primaryKey(),
   title: text("productName").notNull(),
+  brand: text("brand").notNull(),
   price: text("price").notNull(),
   description: jsonb("productDescription").notNull(),
   imageUrls: jsonb("image_urls").notNull(),

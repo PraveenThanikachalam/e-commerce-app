@@ -14,6 +14,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { CredValidation } from "./lib/z.validation";
 import { v4 } from "uuid";
+import ProductRouter from "./_routes/product";
 export interface Bindings {
   AUTH_SECRET: string;
   CLIENT_ID: string;
@@ -145,9 +146,15 @@ app.use("/api/auth/*", authHandler());
 app.use("/api/user-info", verifyAuth());
 app.route("/api/user-info", UserRouter);
 
+// Product Route '/api/product'
+app.route("/api/product", ProductRouter);
+
 // Protect all other /api routes except /api/homepage and /api/auth
 app.use("/api/*", async (c, next) => {
-  if (c.req.path.startsWith("/api/homepage")) {
+  if (
+    c.req.path.startsWith("/api/homepage") ||
+    c.req.path.startsWith("/api/product")
+  ) {
     return next();
   }
   return verifyAuth()(c, next);

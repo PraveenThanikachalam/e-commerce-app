@@ -4,6 +4,7 @@ import {
   GetHomePageContents,
   AddHomePageContents,
 } from "../_controllers/Homepage/homepage_contents";
+import { verifyAuth } from "@hono/auth-js";
 
 const HomepageRouter = new Hono();
 
@@ -11,6 +12,6 @@ const HomepageRouter = new Hono();
 HomepageRouter.get("get-data", GetHomePageContents);
 
 // Add Homepage Contents
-HomepageRouter.post("add-data", CheckAdmin, AddHomePageContents);
+HomepageRouter.post("add-data", verifyAuth(), CheckAdmin, AddHomePageContents);
 
 export default HomepageRouter;
