@@ -29,6 +29,48 @@
       "when": 1737308896592,
       "tag": "0003_melodic_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1738397115534,
+      "tag": "0004_brave_butterfly",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1738397713813,
+      "tag": "0005_yellow_patriot",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1738397867174,
+      "tag": "0006_chubby_rictor",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1738399724967,
+      "tag": "0007_past_steel_serpent",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1738399785218,
+      "tag": "0008_nebulous_bucky",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1738415662444,
+      "tag": "0009_mighty_doomsday",
+      "breakpoints": true
     }
   ]
 }

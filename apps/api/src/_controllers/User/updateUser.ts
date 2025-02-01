@@ -12,7 +12,12 @@ const UpdateUser = async (c: Context): Promise<Response> => {
 
   if (c.req.method === "PATCH") {
     try {
-      const UserData = await c.req.json();
+      const UserData: {
+        email: string;
+        name: string;
+        avatarUrl: string;
+        mobileNumber: bigint;
+      } = await c.req.json();
 
       // Zod validation
       const validatedData = UpdateUserVlidation.parse(UserData);
@@ -23,13 +28,13 @@ const UpdateUser = async (c: Context): Promise<Response> => {
       if (User?.isExists) {
         //   Update user logic here
         const response = await db
-          .update(schema.Users)
+          .update(schema.users)
           .set({
             name: validatedData.name,
-            avatar: validatedData.avatar,
+            avatarUrl: validatedData.avatarUrl,
             mobileNumber: validatedData.mobileNumber,
           })
-          .where(eq(schema.Users.id, User.userId)); // Checks for the unique userId to update the fields
+          .where(eq(schema.users.userId, User.userId)); // Checks for the unique userId to update the fields
         console.log("User updated successfully");
       } else {
         console.log("User not exists");

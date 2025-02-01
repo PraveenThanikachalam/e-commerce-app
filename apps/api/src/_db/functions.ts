@@ -19,15 +19,15 @@ const isUserAlreadyExists = async (
   try {
     const userData = await db
       .select()
-      .from(schema.Users)
-      .where(eq(schema.Users.email, email));
+      .from(schema.users)
+      .where(eq(schema.users.email, email));
 
     console.log(userData);
 
     const user = {
       isExists: userData.length > 0,
       name: userData[0]?.name,
-      userId: userData[0]?.id,
+      userId: userData[0]?.userId,
       role: userData[0]?.role,
       email: userData[0]?.email,
     };
@@ -41,14 +41,14 @@ const isUserAlreadyExists = async (
 // Update the existing user information (placeholder for implementation)
 const updateUser = async (
   db: ReturnType<typeof drizzle>,
-  userId: string,
+  userId: number,
   updateValues: Partial<OAuthUser>
 ) => {
   try {
     await db
-      .update(schema.Users)
+      .update(schema.users)
       .set(updateValues)
-      .where(eq(schema.Users.userId, userId));
+      .where(eq(schema.users.userId, userId));
     console.log("Database: User Updated Successfully");
   } catch (error) {
     console.error("Error updating user:", error);

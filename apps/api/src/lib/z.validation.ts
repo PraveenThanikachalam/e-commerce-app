@@ -1,4 +1,5 @@
-import { z } from "Zod";
+import { uuid } from "drizzle-orm/pg-core";
+import z from "zod";
 
 // Validation for Credentials
 const CredValidation = z.object({
@@ -10,8 +11,8 @@ const CredValidation = z.object({
 const CreateUserValidation = z.object({
   name: z.string(),
   email: z.string().email(),
-  avatar: z.string(),
-  userId: z.string(),
+  avatarUrl: z.string(),
+  userId: z.string().uuid(),
   role: z.string(),
   provider: z.string(),
   mobileNumber: z.number(),
@@ -42,8 +43,8 @@ const HomepageContentValidation = z.object({
 const UpdateUserVlidation = z.object({
   email: z.string().email(),
   name: z.string().optional(),
-  avatar: z.string().optional(),
-  mobileNumber: z.number().optional(),
+  avatarUrl: z.string().optional(),
+  mobileNumber: z.number(),
 });
 
 // Validation for Add Product
@@ -52,7 +53,7 @@ const AddProductValidation = z.object({
   brand: z.string(),
   price: z.string(),
   description: z.array(DescriptionObject),
-  image_alt: z.array(ImageObject),
+  imageUrls: z.array(ImageObject),
 });
 
 export {

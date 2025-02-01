@@ -1,4 +1,4 @@
-import { Context, Hono } from "hono";
+import { Context, Hono, Next } from "hono";
 import HomepageRouter from "./_routes/homepage";
 import notFound from "./pages/404";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
@@ -15,6 +15,10 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { CredValidation } from "./lib/z.validation";
 import { v4 } from "uuid";
 import ProductRouter from "./_routes/product";
+import {
+  AddHomePageContents,
+  GetHomePageContents,
+} from "./_controllers/Homepage/homepage_contents";
 export interface Bindings {
   AUTH_SECRET: string;
   CLIENT_ID: string;
@@ -71,19 +75,14 @@ app.use(
 
           // If user doesn't exists, it will create the new user with email
           if (!User?.isExists) {
-            return await createUser(
-              db,
-              {
-                name: validatedData.userName,
-                email: validatedData.email,
-                userId: v4(),
-                image: "",
-                role: "USER",
-                provider: "Credentails",
-                mobileNumber: 0,
-              },
-              schema.Users
-            );
+            return await createUser(db, {
+              name: validatedData.userName,
+              email: validatedData.email,
+              avatarUrl: "",
+              role: "USER",
+              provider: "Credentails",
+              mobileNumber: 0,
+            });
           }
 
           console.log("User already exists");
@@ -105,10 +104,9 @@ app.use(
         if (user && "email" in user) {
           const oauthUser: OAuthUser = {
             name: user.name || "",
-            image: user.image || "",
+            avatarUrl: user.image || "",
             role: "USER",
             email: user.email || "",
-            userId: user.id || "",
             mobileNumber: parseInt(profile?.phone_number || "0", 10),
             provider: account?.provider || "",
           };
@@ -116,7 +114,7 @@ app.use(
           const userExists = await isUserAlreadyExists(db, oauthUser.email);
 
           if (!userExists?.isExists) {
-            await createUser(db, oauthUser, schema.Users);
+            await createUser(db, oauthUser);
           }
 
           if (userExists?.role === "USER") {
@@ -136,29 +134,20 @@ app.use(
   }))
 );
 
-// API Routes
-app.route("/api/homepage", HomepageRouter);
-
 // Authentication Routes
 app.use("/api/auth/*", authHandler());
 
-// Protect the `/api/user-info` route
-app.use("/api/user-info", verifyAuth());
+// Protect all other /api routes except /api/homepage and /api/auth
+// app.use("/api/*", verifyAuth());
+
+// API Routes
+app.route("/api/homepage", HomepageRouter);
+
 app.route("/api/user-info", UserRouter);
 
 // Product Route '/api/product'
+app.use("/api/product", verifyAuth());
 app.route("/api/product", ProductRouter);
-
-// Protect all other /api routes except /api/homepage and /api/auth
-app.use("/api/*", async (c, next) => {
-  if (
-    c.req.path.startsWith("/api/homepage") ||
-    c.req.path.startsWith("/api/product")
-  ) {
-    return next();
-  }
-  return verifyAuth()(c, next);
-});
 
 // Protected Route
 app.use("/api/protected", async (c) => {

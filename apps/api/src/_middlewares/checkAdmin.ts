@@ -5,9 +5,10 @@ import * as schema from "../_db/schema";
 import { eq } from "drizzle-orm";
 
 const CheckAdmin = async (c: Context, next: Next) => {
-  const { email } = await c.req.json();
-  console.log(email);
-  if (!email) return c.json({ error: "Email field is empty" }, 400);
+  const { token } = c.get("authUser");
+
+  console.log(token.email);
+  if (!token.email) return c.json({ error: "Email field is empty" }, 400);
 
   try {
     const sql = neon(c.env.DATABASE_URL!);
@@ -18,12 +19,13 @@ const CheckAdmin = async (c: Context, next: Next) => {
         role: schema.Users.role,
       })
       .from(schema.Users)
-      .where(eq(schema.Users.email, email));
+      .where(eq(schema.Users.email, token.email));
 
     if (!user.length) return c.json({ error: "User not found" }, 404);
 
-    if (user[0].role !== "ADMIN")
-      return c.json({ error: "You are not an admin" }, 403);
+    if (user[0].role !== "ADMIN") {
+      return c.json({ error: "Unauthorized - Admin access required" }, 403);
+    }
 
     // If user is admin, continue to the next middleware/handler
     await next();

@@ -56,7 +56,14 @@ const AddHomePageContents = async (c: Context) => {
       // Zod validation
       const validatedData = HomepageContentValidation.parse(body);
 
-      await db.insert(HomePageContentsTable).values(validatedData);
+      await db.insert(HomePageContentsTable).values({
+        popular_categories: validatedData.popular_categories,
+        recent_deals: validatedData.recent_deals,
+        popular_products: validatedData.popular_products,
+        slides: validatedData.slides,
+        popular_with_men: validatedData.popular_with_men,
+        popular_with_women: validatedData.popular_with_women,
+      });
 
       return c.json(
         {
