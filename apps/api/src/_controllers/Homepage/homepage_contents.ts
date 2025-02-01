@@ -1,6 +1,6 @@
 import { Context } from "hono";
 import { z } from "zod";
-import { HomePageContentsTable } from "../../_db/schema";
+import { homepage_contents } from "../../_db/schema";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "../../_db/schema";
@@ -21,7 +21,7 @@ const GetHomePageContents = async (c: Context) => {
 
   if (c.req.method === "GET") {
     try {
-      const Response = await db.query.HomePageContentsTable.findMany();
+      const Response = await db.query.homepage_contents.findMany();
       return c.json({ Response }, 200);
     } catch (error) {
       console.error("Error in HomePageContents:", error);
@@ -56,7 +56,7 @@ const AddHomePageContents = async (c: Context) => {
       // Zod validation
       const validatedData = HomepageContentValidation.parse(body);
 
-      await db.insert(HomePageContentsTable).values({
+      await db.insert(homepage_contents).values({
         popular_categories: validatedData.popular_categories,
         recent_deals: validatedData.recent_deals,
         popular_products: validatedData.popular_products,
