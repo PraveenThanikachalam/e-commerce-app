@@ -19,18 +19,18 @@ export default async function AddProduct(c: Context): Promise<Response> {
     const validatedData = AddProductValidation.parse(body);
 
     const [product] = await db
-      .insert(schema.Products)
+      .insert(schema.products)
       .values({
-        title: validatedData.title,
+        productName: validatedData.productName,
         brand: validatedData.brand,
         price: validatedData.price,
-        description: validatedData.description,
-        imageUrls: validatedData.imageUrls,
+        productDescription: validatedData.description,
+        image_urls: validatedData.imageUrls,
       })
       .returning({
-        title: schema.Products.title,
-        brand: schema.Products.brand,
-        price: schema.Products.price,
+        productName: schema.products.productName,
+        brand: schema.products.brand,
+        price: schema.products.price,
       });
 
     return c.json({ message: "Added product successfully", product }, 200);

@@ -48,7 +48,7 @@ const UpdateUserVlidation = z.object({
 
 // Validation for Add Product
 const AddProductValidation = z.object({
-  title: z.string(),
+  productName: z.string(),
   brand: z.string(),
   price: z.string(),
   description: z.array(DescriptionObject),

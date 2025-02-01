@@ -26232,7 +26232,7 @@ var updateUser_default = UpdateUser;
 
 // src/_routes/user.ts
 var UserRouter = new Hono2();
-UserRouter.patch("update-user", updateUser_default);
+UserRouter.patch("update-user", verifyAuth(), updateUser_default);
 var user_default = UserRouter;
 
 // node_modules/@auth/core/providers/credentials.js
@@ -26289,7 +26289,7 @@ async function AddProduct(c3) {
 // src/_routes/product.ts
 var ProductRouter = new Hono2();
 ProductRouter.get("get-products", GetProducts);
-ProductRouter.post("add-products", AddProduct);
+ProductRouter.post("add-products", verifyAuth(), checkAdmin_default, AddProduct);
 var product_default = ProductRouter;
 
 // src/index.ts
