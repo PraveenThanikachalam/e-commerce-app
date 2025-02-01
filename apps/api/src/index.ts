@@ -123,8 +123,8 @@ app.use(
             return true;
           }
 
-          console.log("User not allowed to login");
-          return false;
+          console.log("User Logged in successfully");
+          return true;
         } else {
           console.error("Invalid user object during sign-in", user);
           return false;

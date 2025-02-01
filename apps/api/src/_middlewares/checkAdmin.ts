@@ -3,23 +3,26 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { Context, Next } from "hono";
 import * as schema from "../_db/schema";
 import { eq } from "drizzle-orm";
+import { getAuthUser } from "@hono/auth-js";
 
 const CheckAdmin = async (c: Context, next: Next) => {
-  const { token } = c.get("authUser");
+  const authUser = await getAuthUser(c);
 
-  console.log(token.email);
-  if (!token.email) return c.json({ error: "Email field is empty" }, 400);
+  const token = authUser?.token;
+
+  console.log(token?.email);
+  if (!token?.email) return c.json({ error: "Email field is empty" }, 400);
 
   try {
     const sql = neon(c.env.DATABASE_URL!);
     const db = drizzle(sql, { schema });
     const user = await db
       .select({
-        email: schema.Users.email,
-        role: schema.Users.role,
+        email: schema.users.email,
+        role: schema.users.role,
       })
-      .from(schema.Users)
-      .where(eq(schema.Users.email, token.email));
+      .from(schema.users)
+      .where(eq(schema.users.email, token.email));
 
     if (!user.length) return c.json({ error: "User not found" }, 404);
 

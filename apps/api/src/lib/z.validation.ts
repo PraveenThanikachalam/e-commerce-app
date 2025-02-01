@@ -12,7 +12,6 @@ const CreateUserValidation = z.object({
   name: z.string(),
   email: z.string().email(),
   avatarUrl: z.string(),
-  userId: z.string().uuid(),
   role: z.string(),
   provider: z.string(),
   mobileNumber: z.number(),
