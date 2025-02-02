@@ -6,6 +6,7 @@ import {
   text,
   jsonb,
   bigint,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 // Users Table
@@ -19,13 +20,56 @@ export const users = pgTable("users", {
   provider: text("provider").notNull(),
 });
 
-// Wishlists Table (One Wishlist Belongs to One User)
+// WishLists Table
 export const wishlists = pgTable("wishlists", {
-  wishlistId: serial("wishlistId").primaryKey(),
+  wishlistId: serial("wishlistId").primaryKey().unique().notNull(),
+  wishlistName: text("wishlistName").default("Your wishlist"),
   userId: integer("userId")
     .notNull()
-    .references(() => users.userId), // Reference to Users
+    .references(() => users.userId, { onDelete: "cascade" })
+    .unique(),
 });
+
+// User relations
+export const userRelations = relations(users, ({ one }) => ({
+  wishList: one(wishlists),
+}));
+
+// Wishlists relations
+export const wishlistRelations = relations(wishlists, ({ one }) => ({
+  user: one(users, {
+    fields: [wishlists.userId],
+    references: [users.userId],
+  }),
+}));
+
+// Wishlist items
+export const wishlistItems = pgTable(
+  "wishlistItems",
+  {
+    wishlistId: integer("wishlistId")
+      .notNull()
+      .references(() => wishlists.wishlistId, { onDelete: "cascade" }),
+    productId: integer("productId")
+      .notNull()
+      .references(() => products.productId, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.productId, t.wishlistId] }),
+  })
+);
+
+// Wishlist items relations
+export const wishlistItemRelations = relations(wishlistItems, ({ one }) => ({
+  wishlist: one(wishlists, {
+    fields: [wishlistItems.wishlistId],
+    references: [wishlists.wishlistId],
+  }),
+  product: one(products, {
+    fields: [wishlistItems.productId],
+    references: [products.productId],
+  }),
+}));
 
 // Products Table
 export const products = pgTable("products", {
@@ -37,6 +81,7 @@ export const products = pgTable("products", {
   image_urls: jsonb("image_urls").notNull(),
 });
 
+// Homepage contents table
 export const homepage_contents = pgTable("homepage_contents", {
   id: serial("homepage_contents_id").primaryKey(),
   popular_categories: jsonb("popular_categories").notNull(),
@@ -46,43 +91,3 @@ export const homepage_contents = pgTable("homepage_contents", {
   popular_with_men: jsonb("popular_with_men").notNull(),
   popular_with_women: jsonb("popular_with_women").notNull(),
 });
-
-// Junction Table: WishlistItems (To store products in a wishlist)
-export const wishlist_items = pgTable("wishlist_items", {
-  id: serial("id").primaryKey(),
-  wishlistId: integer("wishlistId")
-    .notNull()
-    .references(() => wishlists.wishlistId), // Reference to Wishlists
-  productId: integer("productId")
-    .notNull()
-    .references(() => products.productId), // Reference to Products
-});
-
-// User relations
-export const user_relations = relations(users, ({ many }) => ({
-  WishlistItems: many(wishlist_items),
-  // this creates a relationship between Users and WishlistItems
-}));
-
-//Wishlist relations
-export const wishlist_relations = relations(wishlists, ({ many }) => ({
-  WishlistItems: many(wishlist_items),
-  // this creates a relationship between Wishlists and WishlistItems
-}));
-
-//WishlistItems relations
-export const wishlist_items_relations = relations(
-  wishlist_items,
-  ({ one }) => ({
-    Wishlist: one(wishlists, {
-      fields: [wishlist_items.wishlistId],
-      references: [wishlists.wishlistId],
-    }),
-    // this creates a relationship between WishlistItems and Wishlists
-    Product: one(products, {
-      fields: [wishlist_items.productId],
-      references: [products.productId],
-    }),
-    // this creates a relationship between WishlistItems and Products
-  })
-);
