@@ -14158,6 +14158,7 @@ function drizzle(...params) {
 var schema_exports = {};
 __export(schema_exports, {
   homepage_contents: () => homepage_contents,
+  productRelations: () => productRelations,
   products: () => products,
   userRelations: () => userRelations,
   users: () => users,
@@ -14183,11 +14184,12 @@ var wishlists = pgTable("wishlists", {
 var userRelations = relations(users, ({ one }) => ({
   wishList: one(wishlists)
 }));
-var wishlistRelations = relations(wishlists, ({ one }) => ({
+var wishlistRelations = relations(wishlists, ({ one, many }) => ({
   user: one(users, {
     fields: [wishlists.userId],
     references: [users.userId]
-  })
+  }),
+  wishlistItems: many(wishlistItems)
 }));
 var wishlistItems = pgTable(
   "wishlistItems",
@@ -14217,6 +14219,9 @@ var products = pgTable("products", {
   productDescription: jsonb("productDescription").notNull(),
   image_urls: jsonb("image_urls").notNull()
 });
+var productRelations = relations(products, ({ many }) => ({
+  wishlistItems: many(wishlistItems)
+}));
 var homepage_contents = pgTable("homepage_contents", {
   id: serial("homepage_contents_id").primaryKey(),
   popular_categories: jsonb("popular_categories").notNull(),

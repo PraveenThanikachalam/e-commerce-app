@@ -36,11 +36,12 @@ export const userRelations = relations(users, ({ one }) => ({
 }));
 
 // Wishlists relations
-export const wishlistRelations = relations(wishlists, ({ one }) => ({
+export const wishlistRelations = relations(wishlists, ({ one, many }) => ({
   user: one(users, {
     fields: [wishlists.userId],
     references: [users.userId],
   }),
+  wishlistItems: many(wishlistItems),
 }));
 
 // Wishlist items
@@ -80,6 +81,11 @@ export const products = pgTable("products", {
   productDescription: jsonb("productDescription").notNull(),
   image_urls: jsonb("image_urls").notNull(),
 });
+
+// Products relations
+export const productRelations = relations(products, ({ many }) => ({
+  wishlistItems: many(wishlistItems),
+}));
 
 // Homepage contents table
 export const homepage_contents = pgTable("homepage_contents", {
