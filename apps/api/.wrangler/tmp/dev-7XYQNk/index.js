@@ -25934,6 +25934,10 @@ var AddProductValidation = z3.object({
   description: z3.array(DescriptionObject),
   imageUrls: z3.array(ImageObject)
 });
+var WishlistValidation = z3.object({
+  wishlistName: z3.string(),
+  email: z3.string()
+});
 
 // src/_controllers/Homepage/homepage_contents.ts
 var GetHomePageContents = async (c3) => {
@@ -26240,9 +26244,45 @@ var UpdateUser = async (c3) => {
 };
 var updateUser_default = UpdateUser;
 
+// src/_controllers/Wishlist/addWishlist.ts
+var AddWishlist = async (c3) => {
+};
+var addWishlist_default = AddWishlist;
+
+// src/_controllers/Wishlist/createWishlist.ts
+var CreateWishlist = async (c3) => {
+  if (c3.req.method !== "POST") {
+    const sql2 = Xs(c3.env.DATABASE_URL);
+    const db = drizzle(sql2, { schema: schema_exports });
+    try {
+      const Wishlist_Data = await c3.req.json();
+      const validatedData = WishlistValidation.parse(Wishlist_Data);
+      const User = await isUserAlreadyExists(db, validatedData.email);
+      const [response] = await db.insert(wishlists).values({
+        userId: User?.userId || 0,
+        wishlistName: validatedData.wishlistName
+      }).returning({
+        wishlistId: wishlists.wishlistId,
+        wishlistName: wishlists.wishlistName
+      });
+      console.log(`Wishlist ${response.wishlistName} created successfully`);
+      return c3.json(response, 200);
+    } catch (error) {
+      console.error(error);
+      return c3.json({ error }, 500);
+    }
+  } else {
+    console.error("Bad Request");
+    return c3.json({ error: "Method not allowed" }, 500);
+  }
+};
+var createWishlist_default = CreateWishlist;
+
 // src/_routes/user.ts
 var UserRouter = new Hono2();
 UserRouter.patch("update-user", verifyAuth(), updateUser_default);
+UserRouter.post("create-wishlist", verifyAuth(), createWishlist_default);
+UserRouter.post("add-wishlist", verifyAuth(), addWishlist_default);
 var user_default = UserRouter;
 
 // node_modules/@auth/core/providers/credentials.js
@@ -26389,7 +26429,7 @@ app.use(
 );
 app.use("/api/auth/*", authHandler());
 app.route("/api/homepage", homepage_default);
-app.route("/api/user-info", user_default);
+app.route("/api/user", user_default);
 app.use("/api/product", verifyAuth());
 app.route("/api/product", product_default);
 app.use("/api/protected", async (c3) => {
