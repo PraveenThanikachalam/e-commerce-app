@@ -22,7 +22,7 @@ const GetHomePageContents = async (c: Context) => {
   if (c.req.method === "GET") {
     try {
       const Response = await db.query.homepage_contents.findMany();
-      return c.json({ Response: "success" }, 200);
+      return c.json(Response, 200);
     } catch (error) {
       console.error("Error in HomePageContents:", error);
       return c.json(

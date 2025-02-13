@@ -143,7 +143,7 @@ app.use("/api/auth/*", authHandler());
 // API Routes
 app.route("/api/homepage", HomepageRouter);
 
-app.route("/api/user-info", UserRouter);
+app.route("/api/user", UserRouter);
 
 // Product Route '/api/product'
 app.use("/api/product", verifyAuth());

@@ -7,12 +7,13 @@ const createUser = async (
   db: ReturnType<typeof drizzle>,
   userInfo: OAuthUser
 ) => {
-  //Validating the user information
+  // Validating the user information
   const validatedData = CreateUserValidation.parse(userInfo);
+
   try {
     const [user] = await db
       .insert(schema.users)
-      .values(userInfo)
+      .values(validatedData)
       .returning({ name: schema.users.name, email: schema.users.email });
 
     console.log("Database: User Created Successfully");
